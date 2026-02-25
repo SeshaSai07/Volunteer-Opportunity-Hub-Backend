@@ -1,15 +1,15 @@
 const { createClient } = require('@supabase/supabase-js');
-require('dotenv').config();
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-    throw new Error('Missing Supabase URL or Key in environment variables');
+    console.error("Missing SUPABASE_URL or SUPABASE_KEY in environment variables.");
 }
 
 const supabase = createClient(supabaseUrl, supabaseKey);
-
-console.log('Supabase Client Initialized');
 
 module.exports = supabase;

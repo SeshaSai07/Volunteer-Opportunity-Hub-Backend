@@ -1,29 +1,35 @@
 const supabase = require('../config/supabaseClient.js');
 
+// Get shareable data for an opportunity
 exports.getShareData = async (req, res) => {
     try {
-        const { id } = req.params;
+        const { opportunityId } = req.params;
 
-        const { data: opportunity, error } = await supabase
+        const { data, error } = await supabase
             .from('opportunities')
-            .select('title, description, location, date')
-            .eq('id', id)
+            .select('title, description, date, location')
+            .eq('id', opportunityId)
             .single();
 
         if (error) throw error;
 
-        // Generate share content
-        const shareText = `Check out this volunteer opportunity: ${opportunity.title} at ${opportunity.location}! #VolunteerHub`;
-        const shareUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/opportunities/${id}`;
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const shareLink = `${frontendUrl}/opportunity/${opportunityId}`;
+
+        const shareText = `Check out this volunteer opportunity: ${data.title}! 
+
+📅 Date: ${new Date(data.date).toLocaleDateString()}
+📍 Location: ${data.location}
+
+Join me in making a difference! ${shareLink}`;
 
         res.json({
-            title: opportunity.title,
+            title: data.title,
             text: shareText,
-            url: shareUrl,
-            hashtags: ['Volunteer', 'Community', 'Impact']
+            url: shareLink
         });
 
     } catch (error) {
-        res.status(404).json({ error: 'Opportunity not found' });
+        res.status(400).json({ error: error.message });
     }
 };
