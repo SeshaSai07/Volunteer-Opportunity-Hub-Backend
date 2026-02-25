@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Environment Variables (CRITICAL security)
+.env
+
+# Debug logs
+npm-debug.log*
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
