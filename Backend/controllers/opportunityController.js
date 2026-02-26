@@ -64,13 +64,24 @@ exports.createOpportunity = async (req, res) => {
 
         const { title, description, category, location, type, date, duration_hours, required_skills } = req.body;
 
+        // Normalize 'type' to lowercase to match the DB check constraint
+        // DB constraint should accept: 'in-person', 'remote', 'hybrid'
+        const validTypes = ['in-person', 'remote', 'hybrid'];
+        const normalizedType = type ? type.toLowerCase().trim() : '';
+
+        if (!validTypes.includes(normalizedType)) {
+            return res.status(400).json({
+                error: `Invalid type "${type}". Must be one of: in-person, remote, hybrid`
+            });
+        }
+
         // Auto-assign org_id to current user
         const org_id = req.user.id;
 
         const { data, error } = await supabase
             .from('opportunities')
             .insert([
-                { org_id, title, description, category, location, type, date, duration_hours, required_skills }
+                { org_id, title, description, category, location, type: normalizedType, date, duration_hours, required_skills }
             ])
             .select();
 
