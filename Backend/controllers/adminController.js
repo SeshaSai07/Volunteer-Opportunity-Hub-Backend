@@ -188,3 +188,28 @@ exports.updateVolunteerLog = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
+
+// 9. Admin: Delete User
+exports.deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        // The profiles table usually deletes cascade from auth.users, or deleting here removes them from the app
+        const { error } = await supabase.from('profiles').delete().eq('id', id);
+        if (error) throw error;
+        res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
+
+// 10. Admin: Delete Opportunity
+exports.deleteOpportunity = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { error } = await supabase.from('opportunities').delete().eq('id', id);
+        if (error) throw error;
+        res.json({ message: 'Opportunity deleted successfully' });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
