@@ -22,4 +22,8 @@ router.delete('/reviews/:id', adminController.deleteReview);
 router.get('/stats', adminController.getSystemStats);
 router.get('/export/csv', adminController.exportVolunteerData);
 
+// Volunteer Tracking
+router.get('/volunteer-logs', adminController.getVolunteerLogs);
+router.put('/volunteer-logs/:id', adminController.updateVolunteerLog);
+
 module.exports = router;
