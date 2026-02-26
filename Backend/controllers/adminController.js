@@ -193,12 +193,27 @@ exports.updateVolunteerLog = async (req, res) => {
 exports.deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
-        // The profiles table usually deletes cascade from auth.users, or deleting here removes them from the app
-        const { error } = await supabase.from('profiles').delete().eq('id', id);
-        if (error) throw error;
-        res.json({ message: 'User deleted successfully' });
+        
+        // In Supabase, you must delete from auth.users using the admin API, not public.profiles.
+        // If your SUPABASE_KEY is a Service Role Key, this will work.
+        // It will automatically cascade and delete the user's `profiles` row.
+        const { data, error } = await supabase.auth.admin.deleteUser(id);
+        
+        if (error) {
+            // Fallback for foreign key constraint errors or if they only gave Anon Key
+            // If they only have anon key, the admin api will fail, so we'll tell them.
+            if (error.status === 401 || error.status === 403) {
+                return res.status(error.status).json({ 
+                    error: "Permission denied. Ensure your backend SUPABASE_KEY is the 'service_role' key, not the 'anon' public key." 
+                });
+            }
+            throw error;
+        }
+
+        res.json({ message: 'User deleted successfully from auth and profiles' });
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        console.error("Delete user error:", error);
+        res.status(400).json({ error: error.message || 'Failed to delete user' });
     }
 };
 
