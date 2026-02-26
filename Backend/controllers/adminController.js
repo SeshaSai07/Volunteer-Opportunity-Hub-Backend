@@ -137,3 +137,54 @@ exports.exportVolunteerData = async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 };
+
+// 7. Admin: Get All Volunteer Logs (with user & opportunity info)
+exports.getVolunteerLogs = async (req, res) => {
+    try {
+        const { status } = req.query;
+
+        let query = supabase
+            .from('volunteer_logs')
+            .select(`
+                id,
+                status,
+                hours_logged,
+                created_at,
+                profiles (id, full_name, email),
+                opportunities (id, title, date, location, duration_hours)
+            `)
+            .order('created_at', { ascending: false });
+
+        if (status) query = query.eq('status', status);
+
+        const { data, error } = await query;
+        if (error) throw error;
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// 8. Admin: Update a Volunteer Log status & hours inline
+exports.updateVolunteerLog = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status, hours_logged } = req.body;
+
+        const validStatuses = ['registered', 'waitlisted', 'attended', 'completed', 'cancelled'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+        }
+
+        const { data, error } = await supabase
+            .from('volunteer_logs')
+            .update({ status, hours_logged: parseFloat(hours_logged) || 0, feedback: 'Updated by Admin' })
+            .eq('id', id)
+            .select();
+
+        if (error) throw error;
+        res.json({ message: 'Log updated successfully', log: data[0] });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
