@@ -26,4 +26,8 @@ router.get('/export/csv', adminController.exportVolunteerData);
 router.get('/volunteer-logs', adminController.getVolunteerLogs);
 router.put('/volunteer-logs/:id', adminController.updateVolunteerLog);
 
+// Deletions
+router.delete('/users/:id', adminController.deleteUser);
+router.delete('/opportunities/:id', adminController.deleteOpportunity);
+
 module.exports = router;
