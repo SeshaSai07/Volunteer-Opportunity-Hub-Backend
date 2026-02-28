@@ -12,11 +12,31 @@ exports.getProfile = async (req, res) => {
             .eq('id', userId)
             .single();
 
-        if (error) throw error;
+        if (error && error.code !== 'PGRST116') {
+             throw error; 
+        }
 
-        res.json(data);
+        // Return profile data. If no profile exists yet, return a basic fallback using auth details
+        res.json(data || { 
+            id: req.user.id,
+            email: req.user.email,
+            full_name: req.user?.user_metadata?.full_name || 'Volunteer',
+            role: req.user.role || 'volunteer',
+            skills: [],
+            bio: ''
+        });
+        
     } catch (error) {
-        res.status(404).json({ error: 'Profile not found' });
+        console.error('Profile Load Error:', error);
+        // Provide the fallback rather than a 404 block for new users
+        res.json({ 
+            id: req.user.id,
+            email: req.user.email,
+            full_name: req.user?.user_metadata?.full_name || 'Volunteer',
+            role: req.user.role || 'volunteer',
+            skills: [],
+            bio: ''
+        });
     }
 };
 
