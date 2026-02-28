@@ -1,4 +1,4 @@
-const { supabase, getAuthClient } = require('../config/supabaseClient.js');
+const supabase = require('../config/supabaseClient.js');
 
 // Get all resources
 exports.getAllResources = async (req, res) => {
@@ -49,9 +49,7 @@ exports.createResource = async (req, res) => {
 
         const author_id = req.user.id; 
 
-        const client = req.token ? getAuthClient(req.token) : supabase;
-
-        const { data, error } = await client
+        const { data, error } = await supabase
             .from('resources')
             .insert([{ title, content, category, author_id }])
             .select();
@@ -68,8 +66,7 @@ exports.createResource = async (req, res) => {
 exports.deleteResource = async (req, res) => {
     try {
         const { id } = req.params;
-        const client = req.token ? getAuthClient(req.token) : supabase;
-        const { error } = await client.from('resources').delete().eq('id', id);
+        const { error } = await supabase.from('resources').delete().eq('id', id);
 
         if (error) throw error;
         res.json({ message: 'Resource deleted successfully' });
