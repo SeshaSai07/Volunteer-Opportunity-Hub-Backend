@@ -61,3 +61,16 @@ exports.createResource = async (req, res) => {
         res.status(400).json({ error: error.message });
     }
 };
+
+// Delete resource (Admin only)
+exports.deleteResource = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { error } = await supabase.from('resources').delete().eq('id', id);
+
+        if (error) throw error;
+        res.json({ message: 'Resource deleted successfully' });
+    } catch (error) {
+        res.status(400).json({ error: error.message });
+    }
+};
