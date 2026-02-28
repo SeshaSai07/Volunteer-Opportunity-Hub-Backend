@@ -7,7 +7,11 @@ const authMiddleware = require('../middleware/authMiddleware.js');
 router.get('/', opportunityController.getAllOpportunities);
 router.get('/:id', opportunityController.getOpportunityById);
 
-// Protected routes (Create)
+// Protected routes (Create & Manage)
 router.post('/', authMiddleware, opportunityController.createOpportunity);
+
+// Organization routes
+router.get('/org/volunteers', authMiddleware, opportunityController.getOrgVolunteers);
+router.put('/org/volunteers/:logId', authMiddleware, opportunityController.updateOrgVolunteerLog);
 
 module.exports = router;
