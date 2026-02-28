@@ -12,19 +12,4 @@ if (!supabaseUrl || !supabaseKey) {
 
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Helper to create a scoped Supabase client with the user's JWT
-// This ensures that PostgreSQL Row-Level Security (RLS) policies see the user's auth.uid()
-const getAuthClient = (token) => {
-    return createClient(supabaseUrl, supabaseKey, {
-        global: {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        },
-        auth: {
-            persistSession: false // Critical for backend environments to not leak sessions
-        }
-    });
-};
-
-module.exports = { supabase, getAuthClient };
+module.exports = supabase;
