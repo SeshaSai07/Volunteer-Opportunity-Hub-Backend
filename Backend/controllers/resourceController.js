@@ -39,16 +39,19 @@ exports.getResourceById = async (req, res) => {
 // Create resource (Admin only - simplified check)
 exports.createResource = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const { title, content, category } = req.body;
+        const { title, content, category, external_link, related_opportunity_id } = req.body;
+        
+        // Ensure user belongs to an organization or is an admin
+        const userRole = req.user?.role;
+        if (userRole !== 'organization' && userRole !== 'admin') {
+             return res.status(403).json({ error: 'Only Organizations and Admins can post resources.' });
+        }
 
-        // Check if user is admin (In real app, query profile role)
-        // const { data: profile } = await supabase.from('profiles').select('role').eq('id', userId).single();
-        // if (profile.role !== 'admin') return res.status(403).json({ error: 'Admin only' });
+        const author_id = req.user.id; 
 
         const { data, error } = await supabase
             .from('resources')
-            .insert([{ title, content, category, author_id: userId }])
+            .insert([{ title, content, category, external_link, related_opportunity_id, author_id }])
             .select();
 
         if (error) throw error;
