@@ -39,7 +39,7 @@ exports.getResourceById = async (req, res) => {
 // Create resource (Admin only - simplified check)
 exports.createResource = async (req, res) => {
     try {
-        const { title, content, category, external_link, related_opportunity_id } = req.body;
+        const { title, content, category } = req.body;
         
         // Ensure user belongs to an organization or is an admin
         const userRole = req.user?.role;
@@ -51,7 +51,7 @@ exports.createResource = async (req, res) => {
 
         const { data, error } = await supabase
             .from('resources')
-            .insert([{ title, content, category, external_link, related_opportunity_id, author_id }])
+            .insert([{ title, content, category, author_id }])
             .select();
 
         if (error) throw error;
