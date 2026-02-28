@@ -58,11 +58,13 @@ exports.getOpportunityById = async (req, res) => {
 // Create opportunity (Org/Admin only)
 exports.createOpportunity = async (req, res) => {
     try {
-        // Ideally check if user role is 'organization' or 'admin'
-        // For now assuming middleware handles role check or we check here
-        // const userRole = req.user.role; // if we added role to JWT
+        // Ensure user belongs to an organization or is an admin
+        const userRole = req.user?.role;
+        if (userRole !== 'organization' && userRole !== 'admin') {
+             return res.status(403).json({ error: 'Only Organizations and Admins can post opportunities.' });
+        }
 
-        const { title, description, category, location, type, date, duration_hours, required_skills } = req.body;
+        const { title, description, category, location, type, date, duration_hours, required_skills, max_volunteers } = req.body;
 
         // Normalize 'type' to lowercase to match the DB check constraint
         // DB constraint should accept: 'in-person', 'remote', 'hybrid'
@@ -90,6 +92,79 @@ exports.createOpportunity = async (req, res) => {
 
     } catch (error) {
         console.error('Create Opportunity Error:', error.message);
+        res.status(400).json({ error: error.message });
+    }
+};
+
+// Get volunteers for an organization's opportunities
+exports.getOrgVolunteers = async (req, res) => {
+    try {
+        const orgId = req.user.id;
+        const { status } = req.query;
+
+        // Fetch logs directly where the linked opportunity's org_id matches the user
+        let query = supabase
+            .from('volunteer_logs')
+            .select(`
+                id,
+                status,
+                hours_logged,
+                created_at,
+                profiles (id, full_name, email),
+                opportunities!inner (id, title, date, location, duration_hours, org_id)
+            `)
+            .eq('opportunities.org_id', orgId)
+            .order('created_at', { ascending: false });
+
+        if (status) query = query.eq('status', status);
+
+        const { data, error } = await query;
+        if (error) throw error;
+        
+        res.json(data);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+};
+
+// Update volunteer log (Organization)
+exports.updateOrgVolunteerLog = async (req, res) => {
+    try {
+        const orgId = req.user.id;
+        const { logId } = req.params;
+        const { status, hours_logged } = req.body;
+
+        // 1. Verify this log belongs to an opportunity owned by this organization
+        const { data: logData, error: logError } = await supabase
+            .from('volunteer_logs')
+            .select('opportunities!inner(org_id)')
+            .eq('id', logId)
+            .single();
+
+        if (logError || !logData) {
+            return res.status(404).json({ error: 'Volunteer log not found.' });
+        }
+
+        if (logData.opportunities.org_id !== orgId) {
+            return res.status(403).json({ error: 'Forbidden. You do not own this opportunity.' });
+        }
+
+        // 2. Perform the update
+        const validStatuses = ['registered', 'waitlisted', 'attended', 'completed', 'cancelled'];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
+        }
+
+        const { data, error } = await supabase
+            .from('volunteer_logs')
+            .update({ status, hours_logged: parseFloat(hours_logged) || 0, feedback: 'Updated by Organization' })
+            .eq('id', logId)
+            .select();
+
+        if (error) throw error;
+        res.json({ message: 'Log updated successfully', log: data[0] });
+
+    } catch (error) {
         res.status(400).json({ error: error.message });
     }
 };
