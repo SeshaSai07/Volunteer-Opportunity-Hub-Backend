@@ -1,4 +1,4 @@
-const supabase = require('../config/supabaseClient.js');
+const { supabase } = require('../config/supabaseClient.js');
 
 const authMiddleware = async (req, res, next) => {
     const authHeader = req.header('Authorization');
@@ -39,6 +39,7 @@ const authMiddleware = async (req, res, next) => {
             ...user,
             role: profile?.role || 'volunteer'
         };
+        req.token = token; // Make token available for RLS-scoped Supabase client
 
         console.log('User role attached:', req.user.role);
         next();
