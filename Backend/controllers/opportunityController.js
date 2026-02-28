@@ -1,4 +1,4 @@
-const supabase = require('../config/supabaseClient.js');
+const { supabase, getAuthClient } = require('../config/supabaseClient.js');
 
 // Get all opportunities with filters & Pagination
 exports.getAllOpportunities = async (req, res) => {
@@ -80,7 +80,9 @@ exports.createOpportunity = async (req, res) => {
         // Auto-assign org_id to current user
         const org_id = req.user.id;
 
-        const { data, error } = await supabase
+        const client = req.token ? getAuthClient(req.token) : supabase;
+
+        const { data, error } = await client
             .from('opportunities')
             .insert([
                 { org_id, title, description, category, location, type: normalizedType, date, duration_hours, required_skills }
@@ -155,7 +157,8 @@ exports.updateOrgVolunteerLog = async (req, res) => {
             return res.status(400).json({ error: `Invalid status. Must be one of: ${validStatuses.join(', ')}` });
         }
 
-        const { data, error } = await supabase
+        const client = req.token ? getAuthClient(req.token) : supabase;
+        const { data, error } = await client
             .from('volunteer_logs')
             .update({ status, hours_logged: parseFloat(hours_logged) || 0, feedback: 'Updated by Organization' })
             .eq('id', logId)
